@@ -1,13 +1,20 @@
 package testBase;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.util.Date;
 import java.util.Properties;
+import java.util.ResourceBundle;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.edge.EdgeDriver;
@@ -16,12 +23,12 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 
 public class BaseClass {
-	public WebDriver driver;
+	static public WebDriver driver;
 	public Logger logger;
 	public Properties p;
 	
 	
-	@BeforeClass
+	@BeforeClass(groups= {"sanity","regression","master"})
 	@Parameters({"os", "browser"})
 	public void setup(String os, String br) throws IOException
 	
@@ -32,9 +39,10 @@ public class BaseClass {
 		 p.load(file);
 		
 		
-		//loading log4j file
+		//loading log4j 
 		logger=LogManager.getLogger(this.getClass());//Log4j
-		
+				
+				
 		//launching browser based on condition
 		switch(br.toLowerCase())
 		{
@@ -46,15 +54,17 @@ public class BaseClass {
 		
 		driver.manage().deleteAllCookies();
 		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+		driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(10));
+		
 		
 		driver.get(p.getProperty("appURL"));
 		driver.manage().window().maximize();
 	}
 	
-	@AfterClass
+	@AfterClass(groups= {"sanity","regression","master"})
 	public void tearDown()
 	{
-		driver.close();
+		driver.quit();
 	}
 	
 
@@ -77,5 +87,21 @@ public class BaseClass {
 		
 		return (str+"@"+num);
 	}
+	
+	public String captureScreen(String tname) throws IOException {
 
-}
+		String timeStamp = new SimpleDateFormat("yyyyMMddhhmmss").format(new Date());
+				
+		TakesScreenshot takesScreenshot = (TakesScreenshot) driver;
+		File sourceFile = takesScreenshot.getScreenshotAs(OutputType.FILE);
+		
+		String targetFilePath=System.getProperty("user.dir")+"\\screenshots\\" + tname + "_" + timeStamp + ".png";
+		File targetFile=new File(targetFilePath);
+		
+		sourceFile.renameTo(targetFile);
+			
+		return targetFilePath;
+
+	}};
+
+
